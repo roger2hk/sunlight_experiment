@@ -26,12 +26,8 @@ func main() {
 	fmt.Printf("checkpoint size: %d\n", cpt.Size)
 	c := client.NewCache(httpClient, *logURL, cpt.Size)
 
-	// Check that tile 1, 0 is consistent with tiles 0, 0 and tile 0, 1.
+	// Check that tile 0, 0 is consistent with tiles 1, 0
 	tile00, err := c.GetTile(ctx, 0, 0)
-	if err != nil {
-		panic(err)
-	}
-	tile01, err := c.GetTile(ctx, 0, 1)
 	if err != nil {
 		panic(err)
 	}
@@ -40,8 +36,8 @@ func main() {
 		panic(err)
 	}
 	l := tile00.Nodes[7][0]
-	r := tile01.Nodes[7][0]
+	r := tile00.Nodes[7][1]
 	p := rfc6962.DefaultHasher.HashChildren(l[:], r[:])
-	fmt.Printf("node at level 8, index 0 as computed by tiles at tile(0, 0) and tile(0, 1)\n%v\n", p[:10])
+	fmt.Printf("node at level 8, index 0 as computed by tile(0, 0)\n%v\n", p[:10])
 	fmt.Printf("node at level 8, index 0 as fetched in tile(1, 0)\n%v\n", want[:10])
 }
