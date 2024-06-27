@@ -15,7 +15,6 @@ import (
 	"github.com/transparency-dev/merkle/proof"
 	"github.com/transparency-dev/merkle/rfc6962"
 	"golang.org/x/mod/sumdb/tlog"
-	"golang.org/x/sync/errgroup"
 )
 
 var (
@@ -26,7 +25,7 @@ var (
 
 func main() {
 	ctx := context.Background()
-	// httpClient := &http.Client{}
+	httpClient := &http.Client{}
 	// cpt, err := client.FetchCheckpoint(httpClient, *logURL)
 	// if err != nil {
 	// 	panic(err)
@@ -57,9 +56,12 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	treeProof, err := tlog.ProveTree(int64(cpt.Size), int64(*oldSize), tlog.TileHashReader(tlog.Tree{N: int64(cpt.Size), Hash: tlog.Hash(newRoot)}, &tileReader{ctx: ctx, prefix: logPrefixURL}))
+	treeProof, err := tlog.ProveTree(int64(cpt.Size), int64(*oldSize), tlog.TileHashReader(tlog.Tree{N: int64(cpt.Size), Hash: tlog.Hash(newRoot)}, &tileReader{ctx: ctx, prefix: logPrefixURL, client: httpClient}))
 	if err != nil {
 		panic(err)
+	}
+	for _, p := range treeProof {
+		fmt.Println(p)
 	}
 
 	consistencyProof := make([][]byte, len(treeProof))
@@ -74,12 +76,35 @@ func main() {
 type tileReader struct {
 	ctx    context.Context
 	prefix *url.URL
+	client *http.Client
 }
 
 func (r tileReader) Height() int {
 	return 8
 }
 
+func (r tileReader) ReadTiles(tiles []tlog.Tile) (data [][]byte, err error) {
+	data = make([][]byte, len(tiles))
+	for i := range tiles {
+		url := r.prefix.JoinPath(tiles[i].Path())
+		resp, err := r.client.Get(url.String())
+		if err != nil {
+			return nil, err
+		}
+		if resp.StatusCode != 200 {
+			return nil, fmt.Errorf("%s returned %d", url, resp.StatusCode)
+		}
+		b, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return nil, err
+		}
+		resp.Body.Close()
+		data[i] = b
+	}
+	return data, nil
+}
+
+/*
 func (r tileReader) ReadTiles(tiles []tlog.Tile) (data [][]byte, err error) {
 	tileData := make([][]byte, len(tiles))
 	group, ctx := errgroup.WithContext(r.ctx)
@@ -109,6 +134,7 @@ func (r tileReader) ReadTiles(tiles []tlog.Tile) (data [][]byte, err error) {
 	}
 	return tileData, nil
 }
+*/
 
 func (r tileReader) SaveTiles(tiles []tlog.Tile, data [][]byte) {
 }

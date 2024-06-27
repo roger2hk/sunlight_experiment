@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"flag"
+	"fmt"
 	"myproj/client"
 	"net/http"
 
@@ -28,6 +29,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	fmt.Println(oldRoot)
 	newRoot, err := base64.StdEncoding.DecodeString(cpt.Root)
 	if err != nil {
 		panic(err)
@@ -45,7 +47,11 @@ func main() {
 		}
 		copy(consistencyProof[i], h[:])
 	}
-	if err := proof.VerifyConsistency(rfc6962.DefaultHasher, uint64(*oldSize), uint64(cpt.Size), consistencyProof, oldRoot, newRoot); err != nil {
+	rehashedProof, err := nodes.Rehash(consistencyProof, rfc6962.DefaultHasher.HashChildren)
+	if err != nil {
+		panic(err)
+	}
+	if err := proof.VerifyConsistency(rfc6962.DefaultHasher, uint64(*oldSize), uint64(cpt.Size), rehashedProof, oldRoot, newRoot); err != nil {
 		panic(err)
 	}
 }
