@@ -26,13 +26,9 @@ var (
 func main() {
 	ctx := context.Background()
 	httpClient := &http.Client{}
-	// cpt, err := client.FetchCheckpoint(httpClient, *logURL)
-	// if err != nil {
-	// 	panic(err)
-	// }
-	cpt := client.Checkpoint{
-		Size: 586558695,
-		Root: "M3EDidVzoiMxPnKHeequZQAFJdJVU0ybshLgB0TxqlE=",
+	cpt, err := client.FetchCheckpoint(httpClient, *logURL)
+	if err != nil {
+		panic(err)
 	}
 	oldRoot, err := base64.StdEncoding.DecodeString(*oldHash)
 	if err != nil {
@@ -56,7 +52,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	treeProof, err := tlog.ProveTree(int64(cpt.Size), int64(*oldSize), tlog.TileHashReader(tlog.Tree{N: int64(cpt.Size), Hash: tlog.Hash(newRoot)}, &tileReader{ctx: ctx, prefix: logPrefixURL, client: httpClient}))
+	// treeProof, err := tlog.ProveTree(int64(cpt.Size), int64(*oldSize), tlog.TileHashReader(tlog.Tree{N: int64(cpt.Size), Hash: tlog.Hash(newRoot)}, &tileReader{ctx: ctx, prefix: logPrefixURL, client: httpClient}))
 	if err != nil {
 		panic(err)
 	}
