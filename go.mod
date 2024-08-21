@@ -7,3 +7,8 @@ require (
 	golang.org/x/mod v0.18.0
 	golang.org/x/sync v0.7.0
 )
+
+require (
+	github.com/google/certificate-transparency-go v1.2.1 // indirect
+	golang.org/x/crypto v0.23.0 // indirect
+)
